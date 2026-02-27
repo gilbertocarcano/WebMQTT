@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MQTT Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+
+
+<h2>Controllo ESP32 via MQTT</h2>
+
+<button onclick="accendi()">ON</button>
+<button onclick="spegni()">OFF</button>
+
+<p>Stato ESP32: <span id="stato">---</span></p>
+
+<script>
+  // Connessione al broker HiveMQ (WebSocket)
+  const client = mqtt.connect("wss://broker.hivemq.com:8884/mqtt");
+
+  client.on("connect", () => {
+    console.log("Connesso al broker MQTT");
+    client.subscribe("esp32/state");
+  });
+
+  // Funzioni per inviare comandi
+  function accendi() {
+    client.publish("esp32/cmd", "ON");
+  }
+
+  function spegni() {
+    client.publish("esp32/cmd", "OFF");
+  }
+
+  // Ricezione messaggi
+  client.on("message", (topic, message) => {
+    if (topic === "esp32/state") {
+      document.getElementById("stato").textContent = message.toString();
+    }
+  });
+</script>
+
+</body>
+</html>
