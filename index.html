@@ -1,45 +1,260 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
+
 <head>
-  <meta charset="UTF-8">
-  <title>MQTT Dashboard</title>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>ESP32 Security System</title>
+    
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    <link rel="stylesheet" href="/css/pico.min.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
 
+    <main class="container">
 
-<h2>Controllo ESP32 via MQTT (v2)</h2>
+        <header>
+            <img id="logo" src="/img/ESP32SecuSys.png">
+        </header>
 
-<button onclick="accendi()">ON</button>
-<button onclick="spegni()">OFF</button>
+        <input type="radio" name="tabs" id="tab-stato" checked>
+        <input type="radio" name="tabs" id="tab-rf">
+        <input type="radio" name="tabs" id="tab-espnow">
+        <input type="radio" name="tabs" id="tab-config">
+        <input type="radio" name="tabs" id="tab-log">
 
-<p>Stato ESP32: <span id="stato">---</span></p>
 
-<script>
-  // Connessione al broker HiveMQ (WebSocket)
-  const client = mqtt.connect("wss://broker.hivemq.com:8884/mqtt");
+        <nav class="navbar">
+            <button id="menuToggle" class="hamburger">☰</button>
 
-  client.on("connect", () => {
-    console.log("Connesso al broker MQTT");
-    client.subscribe("esp32/state");
-  });
+            <ul id="menu" class="menu">
+                <li><label for="tab-stato">Stato</label></li>
+                <li><label for="tab-rf">Dispositivi RF</label></li>
+                <li><label for="tab-espnow">Nodi ESP-NOW</label></li>
+                <li><label for="tab-config">Configurazione</label></li>
+                <li><label for="tab-log">Log</label></li>
+            </ul>
 
-  // Funzioni per inviare comandi
-  function accendi() {
-    client.publish("esp32/cmd", "ON");
-  }
+            <button id="logoutBtn" class="secondary">Esci</button>
+        </nav>
 
-  function spegni() {
-    client.publish("esp32/cmd", "OFF");
-  }
 
-  // Ricezione messaggi
-  client.on("message", (topic, message) => {
-    if (topic === "esp32/state") {
-      document.getElementById("stato").textContent = message.toString();
-    }
-  });
-</script>
 
+
+        <!-- ============================
+             SCHEDA STATO
+        ============================ -->
+        <section id="content-stato" class="tab-content">
+
+            <!-- ALLARME -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>Stato allarme</strong>
+                    <span id="alarmBadge" class="badge off">DISATTIVO</span>
+                </header>
+
+                <div class="card-body">
+                    <label for="switch-1" class="inline-switch">
+                        <input type="checkbox" id="switch-1" role="switch">
+                        Disinserito / Inserito
+                    </label>                    
+                    <div id="zoneCheckboxes" style="margin-top: 0.5rem;">
+                        <label><input type="checkbox" id="zAll"> Tutte le zone</label>
+                        <label><input type="checkbox" id="z1"> Zona 1</label>
+                        <label><input type="checkbox" id="z2"> Zona 2</label>
+                        <label><input type="checkbox" id="z3"> Zona 3</label>
+                        <label><input type="checkbox" id="z4"> Zona 4</label>
+                        <label><input type="checkbox" id="z5"> Zona 5</label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- WIFI -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>Stato WiFi</strong>
+                    <span id="wifiBadge" class="badge off">DISCONNESSO</span>
+                </header>
+
+                <div class="card-body">
+                    <p>SSID: <span id="wifiSSID">-</span></p>
+                    <p>RSSI: <span id="wifiRSSI">-</span> dBm</p>
+                    <p>IP locale: <span id="wifiIP">-</span></p>                    
+                </div>
+            </article>
+
+            <!-- ACCESS POINT -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>Access Point</strong>
+                    <span id="apBadge" class="badge off">DISATTIVO</span>
+                </header>
+
+                <div class="card-body">
+                    <p>IP AP: <span id="apIP">-</span></p>
+                </div>
+            </article>
+
+            <!-- MESH -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>Stato Mesh</strong>
+                    <span id="meshBadge" class="badge off">NON INIZIALIZZATO</span>
+                </header>
+
+                <div class="card-body">
+                    <p>Ruolo nodo: <span id="meshRole">-</span></p>
+                    <p>Info: <span id="meshInfo">-</span></p>
+                </div>
+            </article>
+
+            <!-- SYSTEM -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>Sistema</strong>
+                </header>
+
+                <div class="card-body">
+                    <p>Numero Soft-Reset dall'ultimo avvio: <span id="srCounter"></p>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- ============================
+            SCHEDA DISPOSITIVI RF
+        ============================ -->
+        <section id="content-rf" class="tab-content">
+
+            <article class="card">
+
+                <header class="card-header rf-header">
+                    <strong>Dispositivi RF</strong>
+                </header>
+
+                <div class="card-body">
+
+                    <div id="rfCardsContainer" class="rf-cards">
+                    </div>
+
+                    <p id="rfEmptyMessage" style="text-align:center; opacity:0.6;">
+                        Nessun dispositivo rilevato
+                    </p>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- ============================
+            SCHEDA NODI ESP-NOW
+        ============================ -->
+        <section id="content-espnow" class="tab-content">
+            <article class="card">
+                <header class="card-header espnow-header">
+                    <strong>Nodi ESP-NOW</strong>
+                </header>
+
+                <div class="card-body">
+                    <div id="espnowCardsContainer" class="espnow-cards">
+                        <!-- Cards generate dinamicamente via JS -->
+                    </div>
+                    <p id="espnowEmptyMessage" style="text-align:center; opacity:0.6;">
+                        Nessun nodo rilevato
+                    </p>
+                </div>
+            </article>
+        </section>
+
+        <!-- primo pezzo -->
+
+        <!-- ============================
+             SCHEDA CONFIG
+        ============================ -->
+        <section id="content-config" class="tab-content">            
+            <!-- ============================
+                CONFIGURAZIONE MQTT
+            ============================ -->
+            <article class="card">
+                <header class="card-header">
+                    <strong>MQTT</strong>
+                </header>
+
+                <div class="card-body">
+                                        
+                    <div id="mqttFields" style="margin-top:1rem;">
+
+                        <!-- Hostname -->
+                        <label for="mqttHostname"><strong>Hostname</strong></label>
+                        <input type="text" id="mqttHostname" placeholder="broker.example.com">
+
+                        <br>
+
+                        <!-- Porta -->
+                        <label for="mqttPort"><strong>Porta</strong></label>
+                        <input type="number" id="mqttPort" min="1" max="65535" placeholder="8883">
+
+                        <br>
+
+                        <!-- Username -->
+                        <label for="mqttUsername"><strong>Username</strong></label>
+                        <input type="text" id="mqttUsername" placeholder="mqtt-user">
+
+                        <br>
+
+                        <!-- Password -->
+                        <label for="mqttPassword"><strong>Password</strong></label>
+                        <input type="password" id="mqttPassword" placeholder="Password">
+
+                        <br>
+
+                        <!-- TopicRoot -->
+                        <label for="mqttTopicRoot"><strong>Topic root</strong></label>
+                        <input id="mqttTopicRoot" placeholder="home\alarmsystem\">                                                
+
+                    </div>
+                </div>
+            </article>
+
+            <!-- Pulsante Salva -->
+            <div style="margin-top: 2rem;">
+                <button id="saveConfigBtn" class="primary" style="width:100%;">
+                    Salva
+                </button>
+            </div>
+
+        </section>
+
+        <!-- ============================
+             SCHEDA LOG
+        ============================ -->
+        <section id="content-log" class="tab-content">
+
+            <article class="card">
+                <header class="card-header">
+                    <strong>Log di sistema</strong>
+
+                    <label class="inline-switch" style="font-size:0.9rem;">
+                        <input type="checkbox" id="autoScrollSwitch" role="switch" checked>
+                        Autoscroll
+                    </label>
+                </header>
+
+                <div class="card-body">
+                    <pre id="logContainer"
+                        style="max-height: 400px; overflow-y: auto; background: #222; color: #eee; padding: 1rem; border-radius: 6px; white-space: pre-wrap;">
+Caricamento log...
+                    </pre>
+                </div>
+            </article>
+
+        </section>
+
+    </main>    
+
+    <script type="module" src="js/main.js"></script>
 </body>
+
 </html>

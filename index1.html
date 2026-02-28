@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MQTT Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+
+
+<h2>Controllo ESP32 via MQTT (v2)</h2>
+
+<button onclick="accendi()">ON</button>
+<button onclick="spegni()">OFF</button>
+
+<p>Stato ESP32: <span id="stato">---</span></p>
+
+<script>
+
+    // Sostituisci con il TUO host che trovi nella console di HiveMQ Cloud
+    const brokerUrl = "wss://4f1110ede756470d8f60fe0f257df648.s1.eu.hivemq.cloud:8884/mqtt";
+
+    const options = {
+        username: "esp32-alarmsystem", // Quello che usi nell'ESP32
+        password: "Esp32-alarmsystem", // Quella che usi nell'ESP32
+        //clientId: "web_client_" + Math.random().toString(16).substr(2, 8),
+        clientId: "web_client_1234",
+        clean: true,
+        connectTimeout: 4000
+    };
+
+    // Connessione al broker HiveMQ (WebSocket)
+    const client = mqtt.connect(brokerUrl, options);
+
+  client.on("connect", () => {
+    console.log("Connesso al broker MQTT");
+    client.subscribe("home/alarmsystem/evt/stateChanged");
+  });
+
+  // Funzioni per inviare comandi
+  function accendi() {
+    client.publish("esp32/cmd", "ON");
+  }
+
+  function spegni() {
+    client.publish("esp32/cmd", "OFF");
+  }
+
+  // Ricezione messaggi
+  client.on("message", (topic, message) => {
+    if (topic === "home/alarmsystem/evt/stateChanged") {
+      document.getElementById("stato").textContent = message.toString();
+    }
+  });
+</script>
+
+</body>
+</html>

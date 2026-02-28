@@ -1,0 +1,352 @@
+header {
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+nav.tabs {
+    background: #000;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav.tabs ul {
+    display: flex;
+    margin: 0;
+    gap: 0.5rem;
+}
+
+nav.tabs label {
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+nav.tabs div {
+    display: flex;
+    align-items: center;
+}
+
+nav.tabs > div > button {
+    height: auto;
+    padding: 0.4rem 0.8rem;        
+    margin-right: 1rem;
+}
+
+nav.tabs label:hover {
+    background: #555;
+}
+
+#tab-stato:checked ~ nav.tabs label[for="tab-stato"],
+#tab-rf:checked ~ nav.tabs label[for="tab-rf"],
+#tab-espnow:checked ~ nav.tabs label[for="tab-espnow"],
+#tab-config:checked ~ nav.tabs label[for="tab-config"],
+#tab-log:checked ~ nav.tabs label[for="tab-log"] {
+    background: #333;
+    border-bottom: 2px solid #888;
+}
+
+.tab-content {
+    display: none;
+    padding-top: 1rem;
+}
+
+#tab-stato:checked ~ #content-stato,
+#tab-rf:checked ~ #content-rf,
+#tab-espnow:checked ~ #content-espnow,
+#tab-config:checked ~ #content-config,
+#tab-log:checked ~ #content-log {
+    display: block;
+}
+
+.card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: #f8f8f8;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e8e8e8;      /* grigio chiaro */
+    color:#555;
+    padding: 0.6rem 1rem;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid #ccc;
+}
+
+
+
+.badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+}
+
+.badge.on {
+    background: #0eaaaa;
+}
+
+.badge.off {
+    background: #d55d4f;
+}
+
+.inline-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+#zoneCheckboxes label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 1rem;
+    gap: 0.25rem;
+}
+
+.rf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.rf-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.espnow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* NAVBAR BASE */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #000;
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+/* HAMBURGER BUTTON */
+.hamburger {
+    font-size: 1.6rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: none; /* nascosto su desktop */
+}
+
+/* MENU DESKTOP */
+.menu {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.menu li label {
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* MOBILE MODE */
+@media (max-width: 700px) {
+
+    #logo {
+        height: 80px !important;
+    }
+
+    .navbar {
+        align-items: flex-start;
+    }
+
+    .hamburger {
+        display: block; /* visibile su mobile */
+    }
+
+    .menu {
+        display: none; /* nascosto di default */
+        flex-direction: column;
+        background: #000;
+        width: 100%;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 6px;
+    }
+
+    .menu.open {
+        display: flex; /* mostra menu quando aperto */
+    }    
+    
+    .menu li {
+        padding: 0;          
+        margin: 0;           
+    }
+    
+    .menu li label {
+        padding: 0.6rem 0;   /* solo padding verticale */
+        width: 100%;         /* label a tutta larghezza */
+        font-size: 1.1rem;
+    }
+
+
+}
+
+/* Container cards ESP-NOW */
+.espnow-cards {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(max(220px, 25%), 1fr));
+}
+
+/* Singola card nodo */
+.espnow-node-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.8rem 0.9rem;
+    background: #f8f8f8;
+}
+
+/* Campo dentro la card */
+.espnow-field {
+    margin-bottom: 0.4rem;
+}
+
+/* Label piccola sopra */
+.espnow-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 0.1rem;
+}
+
+/* Valore in grassetto */
+.espnow-value {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+/* Badge di stato nella card ESP-NOW */
+.espnow-node-card {
+    position: relative; /* necessario per posizionare il badge */
+}
+
+.espnow-status-badge {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+}
+
+/* Container cards RF */
+.rf-cards {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(max(220px, 25%), 1fr));
+}
+
+/* Singola card RF */
+.rf-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.8rem 0.9rem;
+    background: #f8f8f8;
+}
+
+/* Campo dentro la card */
+.rf-field {
+    margin-bottom: 0.4rem;
+}
+
+/* Label piccola sopra */
+.rf-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 0.1rem;
+}
+
+/* Valore in grassetto */
+.rf-value {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+/* Pulsanti nella card */
+.rf-card-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+/* Pulsanti in alto a destra nella card RF */
+.rf-card {
+    position: relative;
+}
+
+.rf-card-buttons {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.rf-card-buttons button {
+    min-width: 110px;     /* evita testo a capo */
+    white-space: nowrap;  /* impedisce la divisione della parola */
+    padding: 0.35rem 0.6rem; /* opzionale: rende i pulsanti più comodi */
+}
+
+/* Badge attivazione ritardata / istantanea */
+.rf-delay-badge {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    margin-top: 0.3rem;
+}
+
+.rf-delay-on { background: #d55d4f; }   /* rosso, come badge OFF */
+.rf-delay-off { background: #0eaaaa; }  /* verde, come badge ON */
+
+
+
+
+
+
