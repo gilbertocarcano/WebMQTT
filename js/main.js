@@ -1,5 +1,6 @@
 import mqtt from './mqtt.esm.min.js';
 
+
 // 1. DICHIARAZIONI GLOBALI
 let client = null; // Fondamentale dichiararlo qui fuori
 let TOPICS = { root: "", cmdPrefix: "", evtPrefix: "" };
@@ -91,14 +92,24 @@ function onEvent(event, payload) {
         updateStatusUI(payload);        
     }
 
-    // 4. RSSI
+    // 4. RF DEVICES
+    else if (event === "rfDevicesChanged") {
+        updateRfDevicesUI(payload);        
+    }
+
+    // 4. ESPNOW NODES
+    else if (event === "espNowNodesChanged") {
+        updateEspNowNodesUI(payload);        
+    }
+
+    // 6. RSSI
     else if (event === "rssiChanged") {
         updateRssiUI(payload);        
     }    
 }
 
 // 5. FUNZIONI DI USCITA (COMANDI)
-function publish(command, payload, retain = false) {
+function publish(command, payload) {
     // Controllo se il client esiste ed è connesso
     if (!client || !client.connected) {
         console.warn("MQTT non connesso. Impossibile inviare:", command);
@@ -106,7 +117,7 @@ function publish(command, payload, retain = false) {
     }
     const fullTopic = TOPICS.cmdPrefix + command;
     console.log(`Publish: ${fullTopic} -> ${payload}`)
-    client.publish(fullTopic, payload, { retain: retain, qos: 1 });
+    client.publish(fullTopic, payload, { retain: false, qos: 1 });
 }
 
 // 6. GESTIONE EVENTI UI -------------------------------
@@ -214,6 +225,132 @@ function updateStatusUI(jsonString) {
 
     } catch (e) {
         console.error("Errore nel parsing del JSON di stato:", e);
+    }
+}
+
+async function updateRfDevicesUI(jsonString) {
+    try {
+        const data = JSON.parse(jsonString);
+        const container = document.getElementById("rfCardsContainer");
+        const emptyMsg = document.getElementById("rfEmptyMessage");
+
+        // Pulizia del contenitore prima del ridisegno
+        container.innerHTML = "";
+
+        // Controllo se ci sono dispositivi
+        if (!data.devices || data.devices.length === 0) {
+            if (emptyMsg) emptyMsg.style.display = "block";
+            return;
+        }
+
+        if (emptyMsg) emptyMsg.style.display = "none";
+
+        data.devices.forEach(dev => {
+            // Mapping del tipo: A = Allarme (Sensore), T = Telecomando
+            const isSensor = (dev.type === "A");
+            const typeLabel = isSensor ? "Sensore di intrusione" : "Telecomando att./disatt.";
+
+            // Costruiamo i campi aggiuntivi solo se il dispositivo è un sensore
+            let extraFields = "";
+            if (isSensor) {
+                extraFields = `
+                    <div class="rf-field">
+                        <span class="rf-label">Zona Associata</span>
+                        <span class="rf-value">${dev.zone || '-'}</span>
+                    </div>
+                    <div class="rf-field">
+                        <span class="rf-delay-badge ${dev.delayed ? "rf-delay-on" : "rf-delay-off"}">
+                            ${dev.delayed ? "ATTIVAZIONE RITARDATA" : "ATTIVAZIONE ISTANTANEA"}
+                        </span>
+                    </div>
+                `;
+            }
+
+            const card = document.createElement("div");
+            card.className = "rf-card";
+
+            card.innerHTML = `
+                <div class="rf-field">
+                    <span class="rf-label">Codice Unico (ID)</span>
+                    <span class="rf-value">${dev.id}</span>
+                </div>
+
+                <div class="rf-field">
+                    <span class="rf-label">Tipo Dispositivo</span>
+                    <span class="rf-value">${typeLabel}</span>
+                </div>
+
+                <div class="rf-field">
+                    <span class="rf-label">Nome / Descrizione</span>
+                    <span class="rf-value">${dev.description || 'Nessun dettaglio'}</span>
+                </div>
+
+                ${extraFields}
+            `;
+
+            container.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error("Errore nel rendering dei dispositivi RF:", err);
+    }
+}
+
+async function updateEspNowNodesUI(jsonString) {
+    try {        
+        const data = JSON.parse(jsonString);
+
+        const container = document.getElementById("espnowCardsContainer");
+        const emptyMsg = document.getElementById("espnowEmptyMessage");
+
+        container.innerHTML = "";
+
+        if (!data.nodes || data.nodes.length === 0) {
+            emptyMsg.style.display = "block";
+            return;
+        }
+
+        emptyMsg.style.display = "none";
+
+        data.nodes.forEach(node => {
+
+            const typeLabel = node.canSleep
+                ? "Sleepy node"
+                : "Always-on node";
+
+            const statusLabel = node.canSleep && node.isSleeping
+                ? "Sleeping"
+                : "Attivo";
+
+            const card = document.createElement("div");
+            card.className = "espnow-node-card";
+
+            card.innerHTML = `
+                <span class="espnow-status-badge badge ${statusLabel === "Attivo" ? "on" : "off"}">
+                    ${statusLabel}
+                </span>
+
+                <div class="espnow-field">
+                    <span class="espnow-label">MAC</span>
+                    <span class="espnow-value">${node.mac}</span>
+                </div>
+
+                <div class="espnow-field">
+                    <span class="espnow-label">Nome</span>
+                    <span class="espnow-value">${node.name}</span>
+                </div>
+
+                <div class="espnow-field">
+                    <span class="espnow-label">Tipo</span>
+                    <span class="espnow-value">${typeLabel}</span>
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error("Errore caricamento nodi ESP-NOW:", err);
     }
 }
 
