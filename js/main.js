@@ -5,6 +5,8 @@ import mqtt from './mqtt.esm.min.js';
 let client = null; // Fondamentale dichiararlo qui fuori
 let TOPICS = { root: "", cmdPrefix: "", evtPrefix: "" };
 
+var _clientId;
+
 // 2. FUNZIONI DI SUPPORTO (Devono essere definite prima dell'uso)
 function setupDynamicTopics(root) {
     let cleanRoot = root.replace(/\\/g, "/");
@@ -18,7 +20,7 @@ function setupDynamicTopics(root) {
 // 3. CARICAMENTO CONFIGURAZIONE E CONNESSIONE
 const savedConfig = loadConfig(); // Carica i dati dal localStorage e popola la UI
 
-if (savedConfig && savedConfig.hostname) {
+if (savedConfig && savedConfig.pass) {
     
     // Inizializza i topic PRIMA di connettersi
     setupDynamicTopics(savedConfig.topic || "home/alarmsystem/");
@@ -27,10 +29,10 @@ if (savedConfig && savedConfig.hostname) {
     const options = {
         username: savedConfig.user,
         password: savedConfig.pass,
-        clientId: "web_client_" + Math.random().toString(16).substr(2, 8),
+        clientId: savedConfig.clientId,
         clean: true
     };
-
+    
     // Assegna alla variabile globale dichiarata sopra
     client = mqtt.connect(brokerUrl, options);    
         
@@ -360,21 +362,30 @@ document.getElementById("menuToggle").onclick = () => {
     document.getElementById("menu").classList.toggle("open");
 };
 
-document.getElementById("saveConfigBtn").addEventListener("click", () => {
+document.getElementById("logoutBtn").addEventListener("click", logout);
+
+document.getElementById("saveConfigBtn").addEventListener("click", () => { saveConfig(false); });
+
+function saveConfig(logout) {
     const config = {        
         hostname: document.getElementById("mqttHostname").value,
         port: document.getElementById("mqttPort").value,
         user: document.getElementById("mqttUsername").value,
         pass: document.getElementById("mqttPassword").value,
-        topic: document.getElementById("mqttTopicRoot").value,        
+        topic: document.getElementById("mqttTopicRoot").value,   
+        clientId: _clientId     
     };
 
-    localStorage.setItem("mqtt_config", JSON.stringify(config));
-    alert("Configurazione salvata nel browser!");
+    localStorage.setItem("mqtt_config", JSON.stringify(config));  
+
+    if (!logout)
+        alert("Configurazione salvata nel browser!");
+    else
+        alert("Password rimossa dal local-storage");
     
     // Opzionale: ricarica la pagina per applicare i nuovi parametri
     location.reload(); 
-});
+}
 
 function loadConfig() {
     const saved = localStorage.getItem("mqtt_config");
@@ -385,9 +396,15 @@ function loadConfig() {
         document.getElementById("mqttPort").value = config.port || "8884";
         document.getElementById("mqttUsername").value = config.user || "";
         document.getElementById("mqttPassword").value = config.pass || "";
-        document.getElementById("mqttTopicRoot").value = config.topic || "home/alarmsystem/";    
+        document.getElementById("mqttTopicRoot").value = config.topic || "home/alarmsystem/";   
+        _clientId = config.clientId || "web_client_" + Math.random().toString(16).substr(2, 8);
         
         return config; // Restituisce i dati per la connessione MQTT
     }
     return null;
+}
+
+async function logout() {    
+    document.getElementById("mqttPassword").value ="";
+    saveConfig(true);   
 }
