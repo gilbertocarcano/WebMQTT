@@ -85,8 +85,8 @@ function onEvent(event, payload) {
     }
 
     // 3. LOG DI SISTEMA
-    else if (event === "log") {
-        appendLog(payload);
+    else if (event === "logRowAdded") {
+        appendLogLine(payload);
     }
 
     // 4. STATUS
@@ -149,12 +149,19 @@ function setZoneEnabled(state) {
 //------------------------------------------------------
 
 
-
 // Helper per i Log 
-function appendLog(msg) {
+function appendLogLine(line) {
     const container = document.getElementById("logContainer");
     if (!container) return;
-    container.textContent += msg + "\n";
+
+    let color = "#eee";
+    if (line.includes("[ERROR]")) color = "#e74c3c";
+    else if (line.includes("[WARN]")) color = "#f1c40f";
+    else if (line.includes("[INFO]")) color = "#2ecc71";
+    else if (line.includes("[DEBUG]")) color = "#3498db";
+
+    container.innerHTML += `<div style="color:${color};">${line}</div>`;         
+    
     if (document.getElementById("autoScrollSwitch").checked) {
         container.scrollTop = container.scrollHeight;
     }
