@@ -373,9 +373,12 @@ async function updateEspNowNodesUI(jsonString) {
 
 
 // Listener per il menu hamburger
-document.getElementById("menuToggle").onclick = () => {
-    document.getElementById("menu").classList.toggle("open");
-};
+document.getElementById("menuToggle").addEventListener("click", (e) => {
+    document.getElementById("menu").classList.toggle("open");    
+    
+    // Rimuove il focus dal pulsante
+    e.currentTarget.blur();
+});
 
 document.getElementById("logoutBtn").addEventListener("click", logout);
 
@@ -423,3 +426,21 @@ async function logout() {
     document.getElementById("mqttPassword").value ="";
     saveConfig(true);   
 }
+
+// Chiude il menu quando si seleziona una voce (solo su mobile)
+document.querySelectorAll("#menu li label").forEach(label => {
+    label.addEventListener("click", () => {
+
+        // Verifica se siamo su schermo piccolo
+        if (window.innerWidth <= 700) {
+            const menu = document.getElementById("menu");
+            const toggle = document.getElementById("menuToggle");
+
+            // Chiude il menu
+            menu.classList.remove("open");
+
+            // Rimuove il focus dal pulsante hamburger
+            toggle.blur();
+        }
+    });
+});
