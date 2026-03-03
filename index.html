@@ -4,12 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    
     <title>ESP32 Security System</title>
     
+    
+    <link rel="manifest" href="manifest.json">
+
     <link rel="icon" type="image/png" href="img/favicon.png">
     <link rel="stylesheet" href="css/pico.min.css">
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Registrazione del Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </head>
 
 <body>
