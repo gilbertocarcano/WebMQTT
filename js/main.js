@@ -67,7 +67,12 @@ function handleIncomingMessage(fullTopic, payload) {
 }
 
 function onEvent(event, payload) {
-    // 1. STATO GLOBALE ALLARME
+    // 1. STATO ALLARME ONLINE/OFFLINE
+    if (event === "sysStateChanged") {
+        updateSystemStateUI(payload === "online");
+    }
+
+    // 1. STATO ALLARME ARMED/DISARMED
     if (event === "stateChanged") {
         updateAlarmUI(payload === "armed");
     }
@@ -168,17 +173,20 @@ function appendLogLine(line) {
 }
 
 // Helper per UI Allarme
-function updateAlarmUI(isArmed) {
-    const badge = document.getElementById("alarmBadge");
-    const sw = document.getElementById("switch-1");
-    if (badge) {
-        badge.textContent = isArmed ? "ATTIVO" : "DISATTIVO";
-        badge.className = isArmed ? "badge on" : "badge off";
-    }
+function updateAlarmUI(isArmed) {    
+    const sw = document.getElementById("switch-1");    
     if (sw) {
         sw.checked = isArmed;
         setZoneEnabled(!sw.checked);
     } 
+}
+
+function updateSystemStateUI(state) {
+    const badge = document.getElementById("alarmBadge");    
+    if (badge) {
+        badge.textContent = state ? "ATTIVO" : "DISATTIVO";
+        badge.className = state ? "badge on" : "badge off blink";
+    }    
 }
 
 // Helper per UI Zone
