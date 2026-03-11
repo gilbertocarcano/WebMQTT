@@ -112,7 +112,12 @@ function onEvent(event, payload) {
     // 6. RSSI
     else if (event === "rssiChanged") {
         updateRssiUI(payload);        
-    }    
+    }   
+    
+    // 7. SIREN
+    else if (event === "sirenStateChanged") {
+        updateSirenUI(payload);        
+    }   
 }
 
 // 5. FUNZIONI DI USCITA (COMANDI)
@@ -201,6 +206,11 @@ function updateZoneUI(zoneName, isOn) {
 // Helper per UI RSSI
 function updateRssiUI(value) {
     document.getElementById("wifiRSSI").textContent = value;
+}
+
+// Helper per UI SIREN
+function updateSirenUI(value) {
+    document.getElementById("siren").style.display = value =="1" ? "block" : "none";
 }
 
 // Helper per UI Status
