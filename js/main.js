@@ -67,13 +67,13 @@ function handleIncomingMessage(fullTopic, payload) {
 }
 
 function onEvent(event, payload) {
-    // 1. STATO ALLARME ONLINE/OFFLINE
+    // 0. STATO ALLARME ONLINE/OFFLINE
     if (event === "sysStateChanged") {
         updateSystemStateUI(payload === "online");
     }
 
     // 1. STATO ALLARME ARMED/DISARMED
-    if (event === "stateChanged") {
+    else if (event === "stateChanged") {
         updateAlarmUI(payload === "armed");
     }
 
@@ -117,7 +117,17 @@ function onEvent(event, payload) {
     // 7. SIREN
     else if (event === "sirenStateChanged") {
         updateSirenUI(payload);        
-    }   
+    }  
+    
+    // 8. STATO AUSILIARIO 1
+    else if (event === "aux1Changed") {
+        updateAux1UI(payload === "on");
+    }
+
+    // 8. STATO AUSILIARIO 1
+    else if (event === "aux2Changed") {
+        updateAux2UI(payload === "on");
+    }
 }
 
 // 5. FUNZIONI DI USCITA (COMANDI)
@@ -156,6 +166,14 @@ function setZoneEnabled(state) {
     });
 }
 
+document.getElementById("switch-2").onchange = (e) => {    
+    publish("setAux1", e.target.checked ? "on" : "off");    
+};
+
+document.getElementById("switch-3").onchange = (e) => {    
+    publish("setAux2", e.target.checked ? "on" : "off");    
+};
+
 //------------------------------------------------------
 
 
@@ -183,6 +201,26 @@ function updateAlarmUI(isArmed) {
     if (sw) {
         sw.checked = isArmed;
         setZoneEnabled(!sw.checked);
+    } 
+}
+
+function updateAux1UI(state) {    
+    const sw = document.getElementById("switch-2");   
+    const badge = document.getElementById("aux1Badge");
+    badge.textContent = state ? "ON" : "OFF";
+    badge.className = state ? "badge on" : "badge off"; 
+    if (sw) {
+        sw.checked = state;        
+    } 
+}
+
+function updateAux2UI(state) {    
+    const sw = document.getElementById("switch-3");    
+    const badge = document.getElementById("aux2Badge");
+    badge.textContent = state ? "ON" : "OFF";
+    badge.className = state ? "badge on" : "badge off";
+    if (sw) {
+        sw.checked = state;        
     } 
 }
 
