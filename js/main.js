@@ -17,44 +17,52 @@ function setupDynamicTopics(root) {
     console.log("Sistema Topic Inizializzato:", TOPICS);
 }
 
-// 3. CARICAMENTO CONFIGURAZIONE E CONNESSIONE
-const savedConfig = loadConfig(); // Carica i dati dal localStorage e popola la UI
+async function init() {
+    const savedConfig = await loadConfig(); // ora aspetti il risultato
 
-if (savedConfig && savedConfig.pass) {
-    
-    // Inizializza i topic PRIMA di connettersi
-    setupDynamicTopics(savedConfig.topic || "home/alarmsystem/");
+    if (savedConfig && savedConfig.pass) {
 
-    const brokerUrl = `wss://${savedConfig.hostname}:${savedConfig.port}/mqtt`;
-    const options = {
-        username: savedConfig.user,
-        password: savedConfig.pass,
-        clientId: savedConfig.clientId,
-        clean: true
-    };
-    
-    // Assegna alla variabile globale dichiarata sopra
-    client = mqtt.connect(brokerUrl, options);    
-        
-    client.on("connect", () => {
-        console.log("Connesso a HiveMQ!");
-        client.subscribe(TOPICS.evtPrefix + "#"); 
-        
-        // Aggiorna UI connessione
-        const badge = document.getElementById("internetBadge");
-        if(badge) { badge.className = "badge on"; badge.textContent = "CONNESSO"; }        
-    });
+        // Inizializza i topic PRIMA di connettersi
+        setupDynamicTopics(savedConfig.topic || "home/alarmsystem/");
 
-    client.on("message", (topic, payload) => {
-        handleIncomingMessage(topic, payload);
-    });
+        const brokerUrl = `wss://${savedConfig.hostname}:${savedConfig.port}/mqtt`;
+        const options = {
+            username: savedConfig.user,
+            password: savedConfig.pass,
+            clientId: savedConfig.clientId,
+            clean: true
+        };
 
-    client.on("error", (err) => {
-        console.error("Errore MQTT:", err);
-        const badge = document.getElementById("internetBadge");
-        if(badge) { badge.className = "badge off"; badge.textContent = "OFFLINE"; }
-    });
+        client = mqtt.connect(brokerUrl, options);
+
+        client.on("connect", () => {
+            console.log("Connesso a HiveMQ!");
+            client.subscribe(TOPICS.evtPrefix + "#");
+
+            const badge = document.getElementById("internetBadge");
+            if (badge) {
+                badge.className = "badge on";
+                badge.textContent = "CONNESSO";
+            }
+        });
+
+        client.on("message", (topic, payload) => {
+            handleIncomingMessage(topic, payload);
+        });
+
+        client.on("error", (err) => {
+            console.error("Errore MQTT:", err);
+            const badge = document.getElementById("internetBadge");
+            if (badge) {
+                badge.className = "badge off";
+                badge.textContent = "OFFLINE";
+            }
+        });
+    }
 }
+
+// 3. CARICAMENTO CONFIGURAZIONE E CONNESSIONE
+init();
 
 // 4. LOGICA DI GESTIONE MESSAGGI
 function handleIncomingMessage(fullTopic, payload) {
@@ -67,13 +75,13 @@ function handleIncomingMessage(fullTopic, payload) {
 }
 
 function onEvent(event, payload) {
-    // 1. STATO ALLARME ONLINE/OFFLINE
+    // 0. STATO ALLARME ONLINE/OFFLINE
     if (event === "sysStateChanged") {
         updateSystemStateUI(payload === "online");
     }
 
     // 1. STATO ALLARME ARMED/DISARMED
-    if (event === "stateChanged") {
+    else if (event === "stateChanged") {
         updateAlarmUI(payload === "armed");
     }
 
@@ -112,7 +120,22 @@ function onEvent(event, payload) {
     // 6. RSSI
     else if (event === "rssiChanged") {
         updateRssiUI(payload);        
-    }    
+    }   
+    
+    // 7. SIREN
+    else if (event === "sirenStateChanged") {
+        updateSirenUI(payload);        
+    }  
+    
+    // 8. STATO AUSILIARIO 1
+    else if (event === "aux1Changed") {
+        updateAux1UI(payload === "on");
+    }
+
+    // 8. STATO AUSILIARIO 1
+    else if (event === "aux2Changed") {
+        updateAux2UI(payload === "on");
+    }
 }
 
 // 5. FUNZIONI DI USCITA (COMANDI)
@@ -151,6 +174,14 @@ function setZoneEnabled(state) {
     });
 }
 
+document.getElementById("switch-2").onchange = (e) => {    
+    publish("setAux1", e.target.checked ? "on" : "off");    
+};
+
+document.getElementById("switch-3").onchange = (e) => {    
+    publish("setAux2", e.target.checked ? "on" : "off");    
+};
+
 //------------------------------------------------------
 
 
@@ -181,6 +212,26 @@ function updateAlarmUI(isArmed) {
     } 
 }
 
+function updateAux1UI(state) {    
+    const sw = document.getElementById("switch-2");   
+    const badge = document.getElementById("aux1Badge");
+    badge.textContent = state ? "ON" : "OFF";
+    badge.className = state ? "badge on" : "badge off"; 
+    if (sw) {
+        sw.checked = state;        
+    } 
+}
+
+function updateAux2UI(state) {    
+    const sw = document.getElementById("switch-3");    
+    const badge = document.getElementById("aux2Badge");
+    badge.textContent = state ? "ON" : "OFF";
+    badge.className = state ? "badge on" : "badge off";
+    if (sw) {
+        sw.checked = state;        
+    } 
+}
+
 function updateSystemStateUI(state) {
     const badge = document.getElementById("alarmBadge");    
     if (badge) {
@@ -201,6 +252,11 @@ function updateZoneUI(zoneName, isOn) {
 // Helper per UI RSSI
 function updateRssiUI(value) {
     document.getElementById("wifiRSSI").textContent = value;
+}
+
+// Helper per UI SIREN
+function updateSirenUI(value) {
+    document.getElementById("siren").style.display = value =="1" ? "block" : "none";
 }
 
 // Helper per UI Status
@@ -380,11 +436,34 @@ document.getElementById("menuToggle").addEventListener("click", (e) => {
     e.currentTarget.blur();
 });
 
-document.getElementById("logoutBtn").addEventListener("click", logout);
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await logout();
+});
 
-document.getElementById("saveConfigBtn").addEventListener("click", () => { saveConfig(false); });
+document.getElementById("saveConfigBtn").addEventListener("click", async () => { 
+    await saveConfig(false); 
+});
 
-function saveConfig(logout) {
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open("AlarmConfigDB", 1);
+
+        request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            db.createObjectStore("config", { keyPath: "id" });
+        };
+
+        request.onsuccess = function(event) {
+            resolve(event.target.result);
+        };
+
+        request.onerror = function(event) {
+            reject(event.target.error);
+        };
+    });
+}
+
+async function saveConfig(logout) {
     const config = {        
         hostname: document.getElementById("mqttHostname").value,
         port: document.getElementById("mqttPort").value,
@@ -394,37 +473,54 @@ function saveConfig(logout) {
         clientId: _clientId     
     };
 
-    localStorage.setItem("mqtt_config", JSON.stringify(config));  
+    const db = await openDB();
+    const tx = db.transaction("config", "readwrite");
+    const store = tx.objectStore("config");
+
+    await store.put({ id: "mqtt_config", data: config });
 
     if (!logout)
         alert("Configurazione salvata nel browser!");
     else
-        alert("Password rimossa dal local-storage");
-    
-    // Opzionale: ricarica la pagina per applicare i nuovi parametri
-    location.reload(); 
+        alert("Password rimossa dal database");
+
+    location.reload();
 }
 
-function loadConfig() {
-    const saved = localStorage.getItem("mqtt_config");
-    if (saved) {
-        const config = JSON.parse(saved);
-                
-        document.getElementById("mqttHostname").value = config.hostname || "";
-        document.getElementById("mqttPort").value = config.port || "8884";
-        document.getElementById("mqttUsername").value = config.user || "";
-        document.getElementById("mqttPassword").value = config.pass || "";
-        document.getElementById("mqttTopicRoot").value = config.topic || "home/alarmsystem/";   
-        _clientId = config.clientId || "web_client_" + Math.random().toString(16).substr(2, 8);
-        
-        return config; // Restituisce i dati per la connessione MQTT
-    }
-    return null;
+async function loadConfig() {
+    const db = await openDB();
+    const tx = db.transaction("config", "readonly");
+    const store = tx.objectStore("config");
+
+    return new Promise((resolve, reject) => {
+        const request = store.get("mqtt_config");
+
+        request.onsuccess = () => {
+            if (!request.result) {
+                resolve(null);
+                return;
+            }
+
+            const config = request.result.data;
+
+            document.getElementById("mqttHostname").value = config.hostname || "";
+            document.getElementById("mqttPort").value = config.port || "8884";
+            document.getElementById("mqttUsername").value = config.user || "";
+            document.getElementById("mqttPassword").value = config.pass || "";
+            document.getElementById("mqttTopicRoot").value = config.topic || "home/alarmsystem/";
+
+            _clientId = config.clientId || "web_client_" + Math.random().toString(16).substr(2, 8);
+
+            resolve(config);
+        };
+
+        request.onerror = () => reject(request.error);
+    });
 }
 
 async function logout() {    
     document.getElementById("mqttPassword").value ="";
-    saveConfig(true);   
+    await saveConfig(true);   
 }
 
 // Chiude il menu quando si seleziona una voce (solo su mobile)
